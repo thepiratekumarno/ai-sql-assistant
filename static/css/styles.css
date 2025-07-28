@@ -1,0 +1,44 @@
+.stApp {
+    background-color: #0e1117;
+}
+
+.card {
+    background-color: #192841;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.stButton>button {
+    background-color: #9ef0f0;
+    color: #0e1117;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.stButton>button:hover {
+    background-color: #6ae0e0;
+    transform: scale(1.05);
+}
+
+h1, h2, h3 {
+    color: #9ef0f0 !important;
+}
+
+.stStatusContainer {
+    border: 1px solid #4a90e2;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #1a1a2e;
+}
+
+.setup-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #192841;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
