@@ -1,6 +1,7 @@
 import streamlit as st
 from src.database.schema import get_databases, get_tables
 from src.database.connection import test_connection
+from src.database.mongodb import save_user_credentials
 from src.utils.helpers import get_column_types
 
 def show_setup_ui():
@@ -40,9 +41,16 @@ def show_setup_ui():
     # Final setup
     if st.button("Complete Setup"):
         if google_api_key and 'mysql_creds' in st.session_state:
+            # Save to session
             st.session_state.google_api_key = google_api_key
             st.session_state.setup_complete = True
+            
+            # Save to MongoDB
+            user_id = st.session_state.user_info["email"]
+            save_user_credentials(user_id, {
+                "google_api_key": google_api_key,
+                "mysql_creds": st.session_state.mysql_creds
+            })
+            
             st.success("✅ Setup complete!")
             st.experimental_rerun()
-    
-    return google_api_key
