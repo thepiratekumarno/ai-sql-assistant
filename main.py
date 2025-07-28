@@ -1,10 +1,14 @@
 import streamlit as st
+import extra_streamlit_components as stx
+from src.services.auth import is_authenticated, logout, show_login_ui
+from src.services.oauth import handle_oauth_callback
 from src.services.setup import show_setup_ui
 from src.services.history import init_history, save_query_to_history, show_query_history
 from src.ai.query_generator import generate_sql_query
 from src.ai.explainer import explain_query
 from src.database.queries import execute_query
 from src.database.schema import get_databases, get_tables, get_table_columns, create_table
+from src.database.mongodb import get_user_credentials
 from src.utils.visualization import visualize_data
 from src.utils.helpers import prepare_data_for_export, get_column_types
 import pandas as pd
@@ -17,25 +21,33 @@ st.set_page_config(
 )
 
 # Initialize session state
-if 'setup_complete' not in st.session_state:
-    st.session_state.setup_complete = False
-if 'current_query' not in st.session_state:
-    st.session_state.current_query = ""
-if 'explain_mode' not in st.session_state:
-    st.session_state.explain_mode = True
-if 'visualization_type' not in st.session_state:
-    st.session_state.visualization_type = "Table"
-if 'selected_db' not in st.session_state:
-    st.session_state.selected_db = None
-if 'selected_table' not in st.session_state:
-    st.session_state.selected_table = None
-# Add new session state variables
-if 'last_sql_query' not in st.session_state:
-    st.session_state.last_sql_query = ""
-if 'last_explanation' not in st.session_state:
-    st.session_state.last_explanation = ""
-if 'last_execution_result' not in st.session_state:
-    st.session_state.last_execution_result = None
+def init_session_state():
+    keys = [
+        'setup_complete', 'current_query', 'explain_mode', 
+        'visualization_type', 'selected_db', 'selected_table',
+        'last_sql_query', 'last_explanation', 'last_execution_result',
+        'user_info', 'mysql_creds', 'google_api_key', 'tables'
+    ]
+    default_values = {
+        'setup_complete': False,
+        'current_query': "",
+        'explain_mode': True,
+        'visualization_type': "Table",
+        'selected_db': None,
+        'selected_table': None,
+        'last_sql_query': "",
+        'last_explanation': "",
+        'last_execution_result': None,
+        'user_info': None,
+        'mysql_creds': None,
+        'google_api_key': None,
+        'tables': []
+    }
+    for key in keys:
+        if key not in st.session_state:
+            st.session_state[key] = default_values.get(key, None)
+
+init_session_state()
 
 # Initialize history
 init_history()
@@ -43,16 +55,42 @@ init_history()
 # Visualization options
 VISUALIZATION_TYPES = ["Table", "Bar Chart", "Pie Chart", "Line Chart", "Scatter Plot", "Histogram"]
 
+# Check if we're handling an OAuth callback
+if "oauth_provider" in st.session_state:
+    handle_oauth_callback()
+
+# Authentication check
+if not is_authenticated():
+    show_login_ui()
+    st.stop()
+
+# If authenticated, check if we have saved credentials
+if not st.session_state.setup_complete:
+    user_id = st.session_state.user_info["email"]
+    saved_creds = get_user_credentials(user_id)
+    
+    if saved_creds:
+        # Load saved credentials
+        st.session_state.google_api_key = saved_creds.get("google_api_key")
+        st.session_state.mysql_creds = saved_creds.get("mysql_creds")
+        st.session_state.setup_complete = True
+    else:
+        show_setup_ui()
+        st.stop()
+
+# Main app function
 def show_main_app():
     """Main application interface"""
     # Header
     st.title("🤖 AI-Powered SQL Assistant")
-    st.caption("Interact with your MySQL database using natural language")
+    st.caption(f"Welcome, {st.session_state.user_info['name']}! Interact with your MySQL database using natural language")
     
-    # Sidebar controls
-    st.sidebar.subheader("🔧 Configuration")
+    # Sign out button
+    if st.sidebar.button("Sign Out"):
+        logout()
     
     # Database selection
+    st.sidebar.subheader("🔧 Configuration")
     databases = get_databases(st.session_state.mysql_creds)
     if databases:
         selected_db = st.sidebar.selectbox("📁 Select Database", databases, key="db_selector")
@@ -226,14 +264,5 @@ def show_main_app():
         elif isinstance(st.session_state.last_execution_result, int):
             st.success(f"✅ Rows affected: {st.session_state.last_execution_result}")
 
-# Main application flow
-if not st.session_state.setup_complete:
-    show_setup_ui()
-else:
-    show_main_app()
-
-# Reset button
-if st.session_state.setup_complete and st.sidebar.button("Reset Setup"):
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.experimental_rerun()
+# Run the main app
+show_main_app()
