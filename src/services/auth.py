@@ -14,7 +14,7 @@ OAUTH_PROVIDERS = {
         "token_url": "https://oauth2.googleapis.com/token",
         "userinfo_url": "https://www.googleapis.com/oauth2/v1/userinfo",
         "scope": "openid email profile",
-        "redirect_uri": "https://your-deployed-app-url/oauth_callback"  # Update with your actual deployed URL
+        "redirect_uri": "https://ai-sql-assistant.streamlit.app/oauth_callback"  # Update with your actual deployed URL
     },
     "github": {
         "client_id": "Ov23li2L2zUtFxmsZHkA",
@@ -23,7 +23,7 @@ OAUTH_PROVIDERS = {
         "token_url": "https://github.com/login/oauth/access_token",
         "userinfo_url": "https://api.github.com/user",
         "scope": "user:email",
-        "redirect_uri": "https://your-deployed-app-url/oauth_callback"  # Update with your actual deployed URL
+        "redirect_uri": "https://ai-sql-assistant.streamlit.app/oauth_callback"  # Update with your actual deployed URL
     }
 }
 
